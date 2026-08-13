@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#22346B"/>
+  <!-- Tablilla de revisión -->
+  <rect x="136" y="112" width="240" height="296" rx="24" fill="#F6F7FA"/>
+  <rect x="196" y="80" width="120" height="64" rx="20" fill="#9A7B1F"/>
+  <!-- Renglones de items -->
+  <rect x="176" y="196" width="112" height="18" rx="9" fill="#C3CAD9"/>
+  <rect x="176" y="240" width="160" height="18" rx="9" fill="#C3CAD9"/>
+  <!-- Palomita de aprobado -->
+  <path d="M180 322 l40 42 l116 -118" fill="none" stroke="#1C6B48"
+        stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
