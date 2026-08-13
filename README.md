@@ -59,6 +59,32 @@ en un subdirectorio, sin recompilar.
    carpetas locales que necesita el modo automático)
 2. Icono de instalar en la barra de direcciones → **Instalar**
 
+## Funcionamiento sin red
+
+Una vez instalada, **la app no necesita el servidor para trabajar**. El service
+worker guarda todo el código en el equipo y lo sirve desde ahí; el inventario
+vive en IndexedDB local y las solicitudes se leen de la carpeta sincronizada.
+
+El servidor solo hace falta para:
+
+- **La primera instalación** en cada equipo
+- **Recibir actualizaciones**
+
+Si el hosting se cae, quien ya la tenga instalada sigue trabajando sin notar
+nada.
+
+### Cómo llegan las actualizaciones
+
+Al abrir la app con conexión se sirve la versión guardada —arranque
+instantáneo— y en paralelo se descarga la nueva. **La actualización se aplica
+en el siguiente arranque.** No hay que reinstalar nada.
+
+> Por eso el build usa **nombres de archivo fijos, sin hash**. Con hash, el
+> `index.html` en caché apunta a archivos cuyos nombres cambian en cada
+> publicación; si el equipo está sin red en ese momento, no puede descargarlos
+> y la app queda rota. Con nombres estables el service worker siempre encuentra
+> lo que el HTML pide.
+
 ## Usar
 
 1. **Cargar inventario OH** — botón arriba a la derecha, una vez al día
