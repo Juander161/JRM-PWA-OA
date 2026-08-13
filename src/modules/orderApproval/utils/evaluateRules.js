@@ -82,6 +82,17 @@ export function evaluarItem(
       estado = 'Sin dato';
       motivo = 'Item no encontrado en el Excel de disponibilidad';
     }
+  } else if (disponible < 0) {
+    // Un disponible negativo NUNCA es material que se pueda surtir. Se atrapa
+    // antes del cálculo de porcentaje porque ahí daría un valor negativo, que
+    // por ser menor al umbral pasaría como "Aprobado" — justo al revés.
+    if (esItemServicio(item.descripcion)) {
+      estado = 'N/A - Servicio';
+      motivo = `Disponible negativo (${disponible}) — esperado en items de servicio o paquete, que no son material físico; aprobar según criterio de negocio.`;
+    } else {
+      estado = 'Rechazado';
+      motivo = `Disponible negativo (${disponible}) en el reporte OH: no hay material y el dato indica un error de inventario que conviene reportar.`;
+    }
   } else if (disponible === 0) {
     estado = 'Rechazado';
     motivo = 'Cantidad disponible es 0';

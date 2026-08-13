@@ -121,4 +121,43 @@ Item [2000097477]    Qty [1]    Description [ALGO]
     expect(evaluada.items[0].estado).toBe('Revisar');
     expect(evaluada.items[0].motivo).toMatch(/RDD/i);
   });
+
+  // Un disponible negativo daba un porcentaje negativo que, por ser menor al
+  // umbral, se aprobaba: -3 de existencia devolvía "Aprobado".
+  it('rechaza un item físico con disponible negativo, sin calcular porcentaje', () => {
+    const inventarioNegativo = new Map([
+      ['1000133809', { itemCode: '1000133809', descripcion: 'GOWN', disponible: -3, demanda: null }],
+    ]);
+    const texto = `
+PRDF: RDD 31-JUL-26, Event Date N/A, CLIENTE, Rep REP, BO# 4
+Item [1000133809]    Qty [2]    Description [GOWN: RENTAL ALMA MATER.DOCTOR.]
+`;
+    const { solicitudes } = parseRequestText(texto);
+    const [evaluada] = evaluarSolicitudes(solicitudes, inventarioNegativo, {
+      umbralPorcentaje: 0.3,
+      margenDiasRdd: 3,
+      ahora,
+    });
+    expect(evaluada.items[0].estado).toBe('Rechazado');
+    expect(evaluada.items[0].motivo).toMatch(/negativo/i);
+    expect(evaluada.items[0].porcentajeConsumo).toBeNull();
+  });
+
+  it('marca "N/A - Servicio" un paquete o servicio con disponible negativo', () => {
+    const inventarioNegativo = new Map([
+      ['1012010781', { itemCode: '1012010781', descripcion: 'PAQUETE', disponible: -3, demanda: null }],
+    ]);
+    const texto = `
+PRDF: RDD 31-JUL-26, Event Date N/A, CLIENTE, Rep REP, BO# 5
+Item [1012010781]    Qty [2]    Description [PRODUCT PACKAGE: GRADUATION REGALIA.RENTAL GRADUATION OUTFIT MASTER]
+`;
+    const { solicitudes } = parseRequestText(texto);
+    const [evaluada] = evaluarSolicitudes(solicitudes, inventarioNegativo, {
+      umbralPorcentaje: 0.3,
+      margenDiasRdd: 3,
+      ahora,
+    });
+    expect(evaluada.items[0].estado).toBe('N/A - Servicio');
+    expect(evaluada.items[0].porcentajeConsumo).toBeNull();
+  });
 });
