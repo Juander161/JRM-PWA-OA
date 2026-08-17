@@ -38,10 +38,24 @@ Detalle completo del flujo en [`docs/PWA_Y_POWER_AUTOMATE.md`](docs/PWA_Y_POWER_
 
 ```bash
 npm install
-npm run dev      # http://localhost:5174
-npm test         # 15 pruebas de reglas y parseo
-npm run build    # genera dist/
+npm run dev          # http://localhost:5174
+npm test             # pruebas de reglas y parseo
+npm run build        # genera dist/
+npm run build:unico  # genera además dist/order-approval.html
 ```
+
+### `order-approval.html` — la app en un solo archivo
+
+Un único archivo con el JavaScript, el CSS y el icono incrustados. Se copia a
+una carpeta compartida o se manda por correo, y quien lo recibe **le da doble
+clic**. Sin servidor, sin instalación, sin permisos de TI, sin conexión.
+
+Es el plan B si no se autoriza publicar la PWA.
+
+Lo que se pierde: abierto desde el disco, el navegador no permite vigilar una
+carpeta. Los archivos de solicitud se seleccionan a mano — se pueden marcar
+todos de una vez, pero es un paso manual por tanda. Todo lo demás —reglas,
+pestañas por BO#, detalle por item, exportación— funciona igual.
 
 ## Publicar
 

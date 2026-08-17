@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:unico": "vite build && node scripts/generar-archivo-unico.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
