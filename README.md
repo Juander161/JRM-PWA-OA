@@ -38,10 +38,24 @@ Detalle completo del flujo en [`docs/PWA_Y_POWER_AUTOMATE.md`](docs/PWA_Y_POWER_
 
 ```bash
 npm install
-npm run dev      # http://localhost:5174
-npm test         # 15 pruebas de reglas y parseo
-npm run build    # genera dist/
+npm run dev          # http://localhost:5174
+npm test             # pruebas de reglas y parseo
+npm run build        # genera dist/
+npm run build:unico  # genera además dist/order-approval.html
 ```
+
+### `order-approval.html` — la app en un solo archivo
+
+Un único archivo con el JavaScript, el CSS y el icono incrustados. Se copia a
+una carpeta compartida o se manda por correo, y quien lo recibe **le da doble
+clic**. Sin servidor, sin instalación, sin permisos de TI, sin conexión.
+
+Es el plan B si no se autoriza publicar la PWA.
+
+Lo que se pierde: abierto desde el disco, el navegador no permite vigilar una
+carpeta. Los archivos de solicitud se seleccionan a mano — se pueden marcar
+todos de una vez, pero es un paso manual por tanda. Todo lo demás —reglas,
+pestañas por BO#, detalle por item, exportación— funciona igual.
 
 ## Publicar
 
@@ -58,6 +72,32 @@ en un subdirectorio, sin recompilar.
 1. Abrir la URL en **Chrome o Edge** (Firefox y Safari no soportan el acceso a
    carpetas locales que necesita el modo automático)
 2. Icono de instalar en la barra de direcciones → **Instalar**
+
+## Funcionamiento sin red
+
+Una vez instalada, **la app no necesita el servidor para trabajar**. El service
+worker guarda todo el código en el equipo y lo sirve desde ahí; el inventario
+vive en IndexedDB local y las solicitudes se leen de la carpeta sincronizada.
+
+El servidor solo hace falta para:
+
+- **La primera instalación** en cada equipo
+- **Recibir actualizaciones**
+
+Si el hosting se cae, quien ya la tenga instalada sigue trabajando sin notar
+nada.
+
+### Cómo llegan las actualizaciones
+
+Al abrir la app con conexión se sirve la versión guardada —arranque
+instantáneo— y en paralelo se descarga la nueva. **La actualización se aplica
+en el siguiente arranque.** No hay que reinstalar nada.
+
+> Por eso el build usa **nombres de archivo fijos, sin hash**. Con hash, el
+> `index.html` en caché apunta a archivos cuyos nombres cambian en cada
+> publicación; si el equipo está sin red en ese momento, no puede descargarlos
+> y la app queda rota. Con nombres estables el service worker siempre encuentra
+> lo que el HTML pide.
 
 ## Usar
 
