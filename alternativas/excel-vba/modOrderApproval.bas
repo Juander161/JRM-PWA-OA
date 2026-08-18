@@ -268,15 +268,51 @@ End Function
 ' 4 · PARSEO DEL TEXTO
 '=====================================================================
 
+' Reconstruye el texto pegado, una línea por fila.
+'
+' Al pegar, Excel puede repartir cada renglón en varias columnas: recuerda el
+' último delimitador usado en "Texto en columnas" y lo aplica a lo que se
+' pegue después. Leer solo la columna A perdería el Qty y la descripción, así
+' que se recorre la fila completa y se vuelve a unir.
+'
+' El separador depende del renglón: el encabezado PRDF va separado por comas
+' —el patrón las necesita para distinguir los campos— y los renglones de
+' artículo por espacios.
 Private Function LeerTextoPegado() As String
-    Dim h As Worksheet, ultimaFila As Long, f As Long, sb As String
+    Dim h As Worksheet
+    Dim ultimaFila As Long, ultimaCol As Long
+    Dim f As Long, c As Long
+    Dim linea As String, celda As String, separador As String
+    Dim sb As String
 
     Set h = ThisWorkbook.Worksheets(HOJA_PEGAR)
-    ultimaFila = h.Cells(h.Rows.Count, 1).End(xlUp).Row
+    If Application.WorksheetFunction.CountA(h.Cells) = 0 Then Exit Function
+
+    ultimaFila = h.Cells.Find("*", , xlValues, , xlByRows, xlPrevious).Row
+    ultimaCol = h.Cells.Find("*", , xlValues, , xlByColumns, xlPrevious).Column
 
     For f = 2 To ultimaFila
-        sb = sb & CStr(h.Cells(f, 1).Value) & vbLf
+        If UCase(Left(Trim(CStr(h.Cells(f, 1).Value)), 4)) = "PRDF" Then
+            separador = ", "
+        Else
+            separador = " "
+        End If
+
+        linea = ""
+        For c = 1 To ultimaCol
+            celda = Trim(CStr(h.Cells(f, c).Value))
+            If celda <> "" Then
+                If linea = "" Then
+                    linea = celda
+                Else
+                    linea = linea & separador & celda
+                End If
+            End If
+        Next c
+
+        If linea <> "" Then sb = sb & linea & vbLf
     Next f
+
     LeerTextoPegado = sb
 End Function
 
