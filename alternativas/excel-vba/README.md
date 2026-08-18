@@ -73,6 +73,22 @@ igual que en la aplicación.
 
 ---
 
+### Si al pegar el correo se reparte en varias columnas
+
+Excel recuerda el último delimitador usado en **Texto en columnas** y lo aplica
+a todo lo que se pegue después. Si alguien lo usó antes en esa sesión, cada
+renglón del correo se parte en columnas.
+
+El macro ya lo tolera —recorre la fila completa y la vuelve a unir— pero es
+más limpio desactivarlo:
+
+**Datos → Texto en columnas → Delimitados → Siguiente →
+desmarcar TODOS los delimitadores → Finalizar**
+
+Después de eso, lo que pegues cae en una sola columna.
+
+---
+
 ## Configuración
 
 En la hoja `Config`:

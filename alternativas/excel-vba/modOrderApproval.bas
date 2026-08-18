@@ -268,15 +268,59 @@ End Function
 ' 4 · PARSEO DEL TEXTO
 '=====================================================================
 
+' Reconstruye el texto pegado, una línea por fila.
+'
+' Al pegar, Excel puede repartir cada renglón en varias columnas: recuerda el
+' último delimitador usado en "Texto en columnas" y lo aplica a lo que se
+' pegue después. Leer solo la columna A perdería el Qty y la descripción, así
+' que se recorre la fila completa y se vuelve a unir.
+'
+' El separador depende del renglón: el encabezado PRDF va separado por comas
+' —el patrón las necesita para distinguir los campos— y los renglones de
+' artículo por espacios.
 Private Function LeerTextoPegado() As String
-    Dim h As Worksheet, ultimaFila As Long, f As Long, sb As String
+    Dim h As Worksheet
+    Dim ultimaFila As Long, ultimaCol As Long
+    Dim f As Long, c As Long
+    Dim linea As String, celda As String, separador As String
+    Dim sb As String
+
+    Dim ultima As Range
 
     Set h = ThisWorkbook.Worksheets(HOJA_PEGAR)
-    ultimaFila = h.Cells(h.Rows.Count, 1).End(xlUp).Row
+
+    Set ultima = h.Cells.Find("*", , xlValues, , xlByRows, xlPrevious)
+    If ultima Is Nothing Then Exit Function
+    ultimaFila = ultima.Row
+
+    Set ultima = h.Cells.Find("*", , xlValues, , xlByColumns, xlPrevious)
+    ultimaCol = ultima.Column
+    ' Tope de seguridad: si quedó basura muy a la derecha, no tiene sentido
+    ' recorrer cientos de columnas por cada renglón.
+    If ultimaCol > 40 Then ultimaCol = 40
 
     For f = 2 To ultimaFila
-        sb = sb & CStr(h.Cells(f, 1).Value) & vbLf
+        If UCase(Left(Trim(CStr(h.Cells(f, 1).Value)), 4)) = "PRDF" Then
+            separador = ", "
+        Else
+            separador = " "
+        End If
+
+        linea = ""
+        For c = 1 To ultimaCol
+            celda = Trim(CStr(h.Cells(f, c).Value))
+            If celda <> "" Then
+                If linea = "" Then
+                    linea = celda
+                Else
+                    linea = linea & separador & celda
+                End If
+            End If
+        Next c
+
+        If linea <> "" Then sb = sb & linea & vbLf
     Next f
+
     LeerTextoPegado = sb
 End Function
 
@@ -325,7 +369,10 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
     reItem.Pattern = "Item\s*\[([^\]]*)\]\s*Qty\s*\[([^\]]*)\]\s*Description\s*\[([^\]]*)\]"
     reItem.IgnoreCase = True
 
-    ReDim solicitudes(1 To 200)
+    ' Se reserva poco y se crece según haga falta. Reservar de golpe para
+    ' cientos de solicitudes con cientos de items cada una son decenas de
+    ' miles de estructuras, y VBA se queda sin pila (Error 28).
+    ReDim solicitudes(1 To 8)
     lineas = UnirLineasDeItem(Split(Replace(texto, vbCrLf, vbLf), vbLf))
 
     For Each linea In lineas
@@ -335,6 +382,9 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
             If reEncabezado.Test(CStr(linea)) Then
                 Set coincidencias = reEncabezado.Execute(CStr(linea))
                 n = n + 1
+                If n > UBound(solicitudes) Then
+                    ReDim Preserve solicitudes(1 To UBound(solicitudes) * 2)
+                End If
                 actual = n
                 With solicitudes(actual)
                     .RddTexto = Trim(coincidencias(0).SubMatches(0))
@@ -344,20 +394,23 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
                     .SinEncabezado = False
                     .Rdd = ConvertirRdd(.RddTexto, .RddValida)
                     .NumItems = 0
-                    ReDim .Items(1 To 200)
+                    ReDim .Items(1 To 8)
                 End With
 
             ElseIf reItem.Test(CStr(linea)) Then
                 ' Items sin encabezado previo: solicitud sintética, sin RDD.
                 If actual = 0 Then
                     n = n + 1
+                    If n > UBound(solicitudes) Then
+                        ReDim Preserve solicitudes(1 To UBound(solicitudes) * 2)
+                    End If
                     actual = n
                     With solicitudes(actual)
                         .BO = "(sin encabezado)"
                         .SinEncabezado = True
                         .RddValida = False
                         .NumItems = 0
-                        ReDim .Items(1 To 200)
+                        ReDim .Items(1 To 8)
                     End With
                 End If
 
@@ -387,6 +440,10 @@ Private Sub AgregarItem(ByRef s As tSolicitud, codigo As String, qty As Double, 
             Exit Sub
         End If
     Next i
+
+    If s.NumItems + 1 > UBound(s.Items) Then
+        ReDim Preserve s.Items(1 To UBound(s.Items) * 2)
+    End If
 
     s.NumItems = s.NumItems + 1
     With s.Items(s.NumItems)
