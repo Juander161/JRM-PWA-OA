@@ -233,15 +233,24 @@ Private Function LeerInventario() As Object
     Dim ultimaFila As Long, f As Long
     Dim codigo As String, cantidad As Double
     Dim datos As Variant
+    Dim inv As Object
 
-    Set LeerInventario = CreateObject("Scripting.Dictionary")
+    ' El diccionario se arma en una variable local y hasta el final se asigna
+    ' al nombre de la función. Escribir "LeerInventario(codigo)" dentro de la
+    ' propia función NO accede al diccionario: VBA lo interpreta como una
+    ' llamada recursiva a LeerInventario, y con el primer item repetido la
+    ' recursión se dispara hasta agotar la pila (Error 28).
+    Set inv = CreateObject("Scripting.Dictionary")
     Set h = ThisWorkbook.Worksheets(HOJA_OH)
 
     colItem = BuscarColumna(h, Array("ITEM", "CODIGO", "ITEM CODE"))
     colQty = BuscarColumna(h, Array("ON-HAND QTY", "ON HAND QTY", "ONHAND QTY", _
                                     "OH QTY", "DISPONIBLE", "CANTIDAD DISPONIBLE"))
     colDesc = BuscarColumna(h, Array("ITEM DESCRIPTION", "DESCRIPCION", "DESCRIPTION"))
-    If colItem = 0 Or colQty = 0 Then Exit Function
+    If colItem = 0 Or colQty = 0 Then
+        Set LeerInventario = inv   ' vacío, pero nunca Nothing: quien llama consulta .Count
+        Exit Function
+    End If
 
     ultimaFila = h.Cells(h.Rows.Count, colItem).End(xlUp).Row
 
@@ -249,18 +258,20 @@ Private Function LeerInventario() As Object
         codigo = UCase(Trim(CStr(h.Cells(f, colItem).Value)))
         If codigo <> "" Then
             cantidad = Val(h.Cells(f, colQty).Value)
-            If LeerInventario.Exists(codigo) Then
-                datos = LeerInventario(codigo)
+            If inv.Exists(codigo) Then
+                datos = inv(codigo)
                 datos(0) = datos(0) + cantidad
-                LeerInventario(codigo) = datos
+                inv(codigo) = datos
             Else
                 Dim desc As String
                 desc = ""
                 If colDesc > 0 Then desc = Trim(CStr(h.Cells(f, colDesc).Value))
-                LeerInventario.Add codigo, Array(cantidad, desc)
+                inv.Add codigo, Array(cantidad, desc)
             End If
         End If
     Next f
+
+    Set LeerInventario = inv
 End Function
 
 
@@ -299,7 +310,10 @@ Private Function LeerTextoPegado() As String
     ' recorrer cientos de columnas por cada renglón.
     If ultimaCol > 40 Then ultimaCol = 40
 
-    For f = 2 To ultimaFila
+    ' Desde la fila 1: al pegar encima, el encabezado PRDF suele caer ahí. El
+    ' texto de instrucciones que deja ConfigurarLibro no encaja con ningún
+    ' patrón, así que si sigue presente se ignora solo.
+    For f = 1 To ultimaFila
         If UCase(Left(Trim(CStr(h.Cells(f, 1).Value)), 4)) = "PRDF" Then
             separador = ", "
         Else
