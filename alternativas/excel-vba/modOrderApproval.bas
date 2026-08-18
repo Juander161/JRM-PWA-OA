@@ -285,11 +285,19 @@ Private Function LeerTextoPegado() As String
     Dim linea As String, celda As String, separador As String
     Dim sb As String
 
-    Set h = ThisWorkbook.Worksheets(HOJA_PEGAR)
-    If Application.WorksheetFunction.CountA(h.Cells) = 0 Then Exit Function
+    Dim ultima As Range
 
-    ultimaFila = h.Cells.Find("*", , xlValues, , xlByRows, xlPrevious).Row
-    ultimaCol = h.Cells.Find("*", , xlValues, , xlByColumns, xlPrevious).Column
+    Set h = ThisWorkbook.Worksheets(HOJA_PEGAR)
+
+    Set ultima = h.Cells.Find("*", , xlValues, , xlByRows, xlPrevious)
+    If ultima Is Nothing Then Exit Function
+    ultimaFila = ultima.Row
+
+    Set ultima = h.Cells.Find("*", , xlValues, , xlByColumns, xlPrevious)
+    ultimaCol = ultima.Column
+    ' Tope de seguridad: si quedó basura muy a la derecha, no tiene sentido
+    ' recorrer cientos de columnas por cada renglón.
+    If ultimaCol > 40 Then ultimaCol = 40
 
     For f = 2 To ultimaFila
         If UCase(Left(Trim(CStr(h.Cells(f, 1).Value)), 4)) = "PRDF" Then
@@ -361,7 +369,10 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
     reItem.Pattern = "Item\s*\[([^\]]*)\]\s*Qty\s*\[([^\]]*)\]\s*Description\s*\[([^\]]*)\]"
     reItem.IgnoreCase = True
 
-    ReDim solicitudes(1 To 200)
+    ' Se reserva poco y se crece según haga falta. Reservar de golpe para
+    ' cientos de solicitudes con cientos de items cada una son decenas de
+    ' miles de estructuras, y VBA se queda sin pila (Error 28).
+    ReDim solicitudes(1 To 8)
     lineas = UnirLineasDeItem(Split(Replace(texto, vbCrLf, vbLf), vbLf))
 
     For Each linea In lineas
@@ -371,6 +382,9 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
             If reEncabezado.Test(CStr(linea)) Then
                 Set coincidencias = reEncabezado.Execute(CStr(linea))
                 n = n + 1
+                If n > UBound(solicitudes) Then
+                    ReDim Preserve solicitudes(1 To UBound(solicitudes) * 2)
+                End If
                 actual = n
                 With solicitudes(actual)
                     .RddTexto = Trim(coincidencias(0).SubMatches(0))
@@ -380,20 +394,23 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
                     .SinEncabezado = False
                     .Rdd = ConvertirRdd(.RddTexto, .RddValida)
                     .NumItems = 0
-                    ReDim .Items(1 To 200)
+                    ReDim .Items(1 To 8)
                 End With
 
             ElseIf reItem.Test(CStr(linea)) Then
                 ' Items sin encabezado previo: solicitud sintética, sin RDD.
                 If actual = 0 Then
                     n = n + 1
+                    If n > UBound(solicitudes) Then
+                        ReDim Preserve solicitudes(1 To UBound(solicitudes) * 2)
+                    End If
                     actual = n
                     With solicitudes(actual)
                         .BO = "(sin encabezado)"
                         .SinEncabezado = True
                         .RddValida = False
                         .NumItems = 0
-                        ReDim .Items(1 To 200)
+                        ReDim .Items(1 To 8)
                     End With
                 End If
 
@@ -423,6 +440,10 @@ Private Sub AgregarItem(ByRef s As tSolicitud, codigo As String, qty As Double, 
             Exit Sub
         End If
     Next i
+
+    If s.NumItems + 1 > UBound(s.Items) Then
+        ReDim Preserve s.Items(1 To UBound(s.Items) * 2)
+    End If
 
     s.NumItems = s.NumItems + 1
     With s.Items(s.NumItems)
