@@ -2,18 +2,18 @@ Attribute VB_Name = "modOrderApproval"
 Option Explicit
 
 '=====================================================================
-' Order Approval — evaluación de solicitudes contra el reporte OH
+' Order Approval - evaluacion de solicitudes contra el reporte OH
 '
 ' Port de las reglas de la PWA a VBA, para el caso en que no se autorice
-' publicar una aplicación. Mismas reglas, mismos estados, mismos colores.
+' publicar una aplicacion. Mismas reglas, mismos estados, mismos colores.
 '
-' Cada BO# se escribe en su propia hoja: las pestañas de Excel hacen el
-' papel de las pestañas de la aplicación.
+' Cada BO# se escribe en su propia hoja: las pestanas de Excel hacen el
+' papel de las pestanas de la aplicacion.
 '
 ' MACROS QUE SE EJECUTAN A MANO:
-'   ConfigurarLibro    · una sola vez, crea las hojas y los valores por defecto
-'   EvaluarSolicitudes · el botón de todos los días
-'   LimpiarResultados  · borra las hojas de BO# generadas
+'   ConfigurarLibro    - una sola vez, crea las hojas y los valores por defecto
+'   EvaluarSolicitudes - el boton de todos los dias
+'   LimpiarResultados  - borra las hojas de BO# generadas
 '=====================================================================
 
 ' --- Hojas fijas del libro ---
@@ -22,7 +22,7 @@ Private Const HOJA_PEGAR     As String = "Pegar"
 Private Const HOJA_OH        As String = "OH"
 Private Const HOJA_HISTORIAL As String = "Historial"
 
-' --- Colores de estado (mismos que la aplicación) ---
+' --- Colores de estado (mismos que la aplicacion) ---
 Private Const FONDO_APROBADO As Long = 15462884   ' #E4F2EA
 Private Const FONDO_RECHAZADO As Long = 15263737  ' #F9E5E5
 Private Const FONDO_REVISAR  As Long = 14344699   ' #FBEFDA
@@ -58,6 +58,7 @@ Private Type tSolicitud
     Rep       As String
     Items()   As tItem
     NumItems  As Long
+    NoReconocidas As String
 End Type
 
 Private Type tConfig
@@ -71,7 +72,7 @@ End Type
 
 
 '=====================================================================
-' 1 · INSTALACIÓN
+' 1 - INSTALACION
 '=====================================================================
 
 Public Sub ConfigurarLibro()
@@ -82,12 +83,12 @@ Public Sub ConfigurarLibro()
     Set h = ObtenerOCrearHoja(HOJA_CONFIG)
     If h.Range("A1").Value = "" Then
         With h
-            .Range("A1").Value = "Parámetro":        .Range("B1").Value = "Valor"
+            .Range("A1").Value = "Parametro":        .Range("B1").Value = "Valor"
             .Range("A2").Value = "Umbral (%)":       .Range("B2").Value = 30
-            .Range("A3").Value = "Margen RDD (días)":.Range("B3").Value = 3
-            .Range("A4").Value = "Zona ámbar (%)":   .Range("B4").Value = 7
-            .Range("A5").Value = "Cantidad máxima":  .Range("B5").Value = 0
-            .Range("A6").Value = "Cantidad mínima":  .Range("B6").Value = 0
+            .Range("A3").Value = "Margen RDD (dias)":.Range("B3").Value = 3
+            .Range("A4").Value = "Zona ambar (%)":   .Range("B4").Value = 7
+            .Range("A5").Value = "Cantidad maxima":  .Range("B5").Value = 0
+            .Range("A6").Value = "Cantidad minima":  .Range("B6").Value = 0
             .Range("A8").Value = "Items excluidos (uno por fila, desde A9)"
             .Range("A1:B1").Font.Bold = True
             .Range("A8").Font.Bold = True
@@ -98,7 +99,7 @@ Public Sub ConfigurarLibro()
 
     Set h = ObtenerOCrearHoja(HOJA_PEGAR)
     If h.Range("A1").Value = "" Then
-        h.Range("A1").Value = "Pega aquí el asunto y el cuerpo del correo, luego ejecuta EvaluarSolicitudes"
+        h.Range("A1").Value = "Pega aqui el asunto y el cuerpo del correo, luego ejecuta EvaluarSolicitudes"
         h.Range("A1").Font.Bold = True
         h.Columns("A").ColumnWidth = 120
     End If
@@ -109,7 +110,7 @@ Public Sub ConfigurarLibro()
         h.Range("B1").Value = "Item Description"
         h.Range("C1").Value = "On-hand Qty"
         h.Range("A1:C1").Font.Bold = True
-        h.Range("A2").Value = "(pega aquí el reporte OH, respetando los encabezados)"
+        h.Range("A2").Value = "(pega aqui el reporte OH, respetando los encabezados)"
     End If
 
     Set h = ObtenerOCrearHoja(HOJA_HISTORIAL)
@@ -128,7 +129,7 @@ End Sub
 
 
 '=====================================================================
-' 2 · MACRO PRINCIPAL
+' 2 - MACRO PRINCIPAL
 '=====================================================================
 
 Public Sub EvaluarSolicitudes()
@@ -146,7 +147,7 @@ Public Sub EvaluarSolicitudes()
 
     If inventario.Count = 0 Then
         Application.ScreenUpdating = True
-        MsgBox "La hoja " & HOJA_OH & " está vacía o no tiene las columnas " & _
+        MsgBox "La hoja " & HOJA_OH & " esta vacia o no tiene las columnas " & _
                "'Item' y 'On-hand Qty'.", vbExclamation
         Exit Sub
     End If
@@ -155,7 +156,7 @@ Public Sub EvaluarSolicitudes()
 
     If numSolicitudes = 0 Then
         Application.ScreenUpdating = True
-        MsgBox "No se encontró ninguna solicitud en la hoja " & HOJA_PEGAR & ".", vbExclamation
+        MsgBox "No se encontro ninguna solicitud en la hoja " & HOJA_PEGAR & ".", vbExclamation
         Exit Sub
     End If
 
@@ -167,7 +168,7 @@ Public Sub EvaluarSolicitudes()
 
     Application.ScreenUpdating = True
     MsgBox numSolicitudes & " solicitud(es) evaluada(s)." & vbCrLf & _
-           "Cada BO# quedó en su propia pestaña.", vbInformation
+           "Cada BO# quedo en su propia pestana.", vbInformation
     Exit Sub
 
 Fallo:
@@ -180,7 +181,7 @@ Public Sub LimpiarResultados()
     Dim h As Worksheet
     Dim n As Long
 
-    If MsgBox("¿Borrar todas las pestañas de resultados?" & vbCrLf & _
+    If MsgBox("Borrar todas las pestanas de resultados?" & vbCrLf & _
               "Config, Pegar, OH e Historial no se tocan.", _
               vbQuestion + vbYesNo) <> vbYes Then Exit Sub
 
@@ -195,12 +196,12 @@ Public Sub LimpiarResultados()
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
 
-    MsgBox n & " pestaña(s) eliminada(s).", vbInformation
+    MsgBox n & " pestana(s) eliminada(s).", vbInformation
 End Sub
 
 
 '=====================================================================
-' 3 · CONFIGURACIÓN E INVENTARIO
+' 3 - CONFIGURACION E INVENTARIO
 '=====================================================================
 
 Private Function LeerConfig() As tConfig
@@ -224,9 +225,9 @@ Private Function LeerConfig() As tConfig
 End Function
 
 
-' Devuelve un diccionario código -> Array(disponible, descripción).
+' Devuelve un diccionario codigo -> Array(disponible, descripcion).
 ' Si un item aparece en varias filas (distintos Locators), se SUMAN las
-' cantidades: quedarse con la primera daría un disponible menor al real.
+' cantidades: quedarse con la primera daria un disponible menor al real.
 Private Function LeerInventario() As Object
     Dim h As Worksheet
     Dim colItem As Long, colQty As Long, colDesc As Long
@@ -236,10 +237,10 @@ Private Function LeerInventario() As Object
     Dim inv As Object
 
     ' El diccionario se arma en una variable local y hasta el final se asigna
-    ' al nombre de la función. Escribir "LeerInventario(codigo)" dentro de la
-    ' propia función NO accede al diccionario: VBA lo interpreta como una
+    ' al nombre de la funcion. Escribir "LeerInventario(codigo)" dentro de la
+    ' propia funcion NO accede al diccionario: VBA lo interpreta como una
     ' llamada recursiva a LeerInventario, y con el primer item repetido la
-    ' recursión se dispara hasta agotar la pila (Error 28).
+    ' recursion se dispara hasta agotar la pila (Error 28).
     Set inv = CreateObject("Scripting.Dictionary")
     Set h = ThisWorkbook.Worksheets(HOJA_OH)
 
@@ -248,7 +249,7 @@ Private Function LeerInventario() As Object
                                     "OH QTY", "DISPONIBLE", "CANTIDAD DISPONIBLE"))
     colDesc = BuscarColumna(h, Array("ITEM DESCRIPTION", "DESCRIPCION", "DESCRIPTION"))
     If colItem = 0 Or colQty = 0 Then
-        Set LeerInventario = inv   ' vacío, pero nunca Nothing: quien llama consulta .Count
+        Set LeerInventario = inv   ' vacio, pero nunca Nothing: quien llama consulta .Count
         Exit Function
     End If
 
@@ -276,19 +277,19 @@ End Function
 
 
 '=====================================================================
-' 4 · PARSEO DEL TEXTO
+' 4 - PARSEO DEL TEXTO
 '=====================================================================
 
-' Reconstruye el texto pegado, una línea por fila.
+' Reconstruye el texto pegado, una linea por fila.
 '
-' Al pegar, Excel puede repartir cada renglón en varias columnas: recuerda el
-' último delimitador usado en "Texto en columnas" y lo aplica a lo que se
-' pegue después. Leer solo la columna A perdería el Qty y la descripción, así
+' Al pegar, Excel puede repartir cada renglon en varias columnas: recuerda el
+' ultimo delimitador usado en "Texto en columnas" y lo aplica a lo que se
+' pegue despues. Leer solo la columna A perderia el Qty y la descripcion, asi
 ' que se recorre la fila completa y se vuelve a unir.
 '
-' El separador depende del renglón: el encabezado PRDF va separado por comas
-' —el patrón las necesita para distinguir los campos— y los renglones de
-' artículo por espacios.
+' El separador depende del renglon: el encabezado PRDF va separado por comas
+' -el patron las necesita para distinguir los campos- y los renglones de
+' articulo por espacios.
 Private Function LeerTextoPegado() As String
     Dim h As Worksheet
     Dim ultimaFila As Long, ultimaCol As Long
@@ -306,13 +307,13 @@ Private Function LeerTextoPegado() As String
 
     Set ultima = h.Cells.Find("*", , xlValues, , xlByColumns, xlPrevious)
     ultimaCol = ultima.Column
-    ' Tope de seguridad: si quedó basura muy a la derecha, no tiene sentido
-    ' recorrer cientos de columnas por cada renglón.
+    ' Tope de seguridad: si quedo basura muy a la derecha, no tiene sentido
+    ' recorrer cientos de columnas por cada renglon.
     If ultimaCol > 40 Then ultimaCol = 40
 
-    ' Desde la fila 1: al pegar encima, el encabezado PRDF suele caer ahí. El
-    ' texto de instrucciones que deja ConfigurarLibro no encaja con ningún
-    ' patrón, así que si sigue presente se ignora solo.
+    ' Desde la fila 1: al pegar encima, el encabezado PRDF suele caer ahi. El
+    ' texto de instrucciones que deja ConfigurarLibro no encaja con ningun
+    ' patron, asi que si sigue presente se ignora solo.
     For f = 1 To ultimaFila
         If UCase(Left(Trim(CStr(h.Cells(f, 1).Value)), 4)) = "PRDF" Then
             separador = ", "
@@ -339,9 +340,9 @@ Private Function LeerTextoPegado() As String
 End Function
 
 
-' Une los renglones cuya descripción quedó abierta: cuando el cliente de
-' correo envuelve una descripción larga, ninguna de las dos líneas encaja
-' con el patrón y el artículo se perdería sin evaluar.
+' Une los renglones cuya descripcion quedo abierta: cuando el cliente de
+' correo envuelve una descripcion larga, ninguna de las dos lineas encaja
+' con el patron y el articulo se perderia sin evaluar.
 Private Function UnirLineasDeItem(lineas As Variant) As Variant
     Dim unidas() As String
     Dim i As Long, n As Long
@@ -383,7 +384,7 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
     reItem.Pattern = "Item\s*\[([^\]]*)\]\s*Qty\s*\[([^\]]*)\]\s*Description\s*\[([^\]]*)\]"
     reItem.IgnoreCase = True
 
-    ' Se reserva poco y se crece según haga falta. Reservar de golpe para
+    ' Se reserva poco y se crece segun haga falta. Reservar de golpe para
     ' cientos de solicitudes con cientos de items cada una son decenas de
     ' miles de estructuras, y VBA se queda sin pila (Error 28).
     ReDim solicitudes(1 To 8)
@@ -412,7 +413,7 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
                 End With
 
             ElseIf reItem.Test(CStr(linea)) Then
-                ' Items sin encabezado previo: solicitud sintética, sin RDD.
+                ' Items sin encabezado previo: solicitud sintetica, sin RDD.
                 If actual = 0 Then
                     n = n + 1
                     If n > UBound(solicitudes) Then
@@ -433,6 +434,14 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
                     Trim(coincidencias(0).SubMatches(0)), _
                     Val(Trim(coincidencias(0).SubMatches(1))), _
                     Trim(coincidencias(0).SubMatches(2))
+
+            ElseIf actual > 0 Then
+                ' Renglon dentro de una solicitud que no encajo con ningun
+                ' patron. Se guarda para mostrarlo en la hoja: sin esto, un
+                ' item mal leido simplemente desaparece y la solicitud sale
+                ' aprobada por no tener nada que rechazar.
+                solicitudes(actual).NoReconocidas = _
+                    solicitudes(actual).NoReconocidas & linea & vbLf
             End If
 
         End If
@@ -442,7 +451,7 @@ Private Function ParsearTexto(texto As String, ByRef solicitudes() As tSolicitud
 End Function
 
 
-' Un mismo código repetido dentro de la solicitud suma su cantidad, en vez
+' Un mismo codigo repetido dentro de la solicitud suma su cantidad, en vez
 ' de quedar como dos renglones sueltos.
 Private Sub AgregarItem(ByRef s As tSolicitud, codigo As String, qty As Double, desc As String)
     Dim i As Long
@@ -505,10 +514,10 @@ End Function
 
 
 '=====================================================================
-' 5 · REGLAS DE NEGOCIO
+' 5 - REGLAS DE NEGOCIO
 '
-' Orden de prioridad idéntico al de la aplicación. Si aquí se cambia algo
-' y allá no (o al revés), los dos dejan de coincidir.
+' Orden de prioridad identico al de la aplicacion. Si aqui se cambia algo
+' y alla no (o al reves), los dos dejan de coincidir.
 '=====================================================================
 
 Private Function EsItemServicio(descripcion As String) As Boolean
@@ -546,15 +555,15 @@ Private Sub EvaluarUnaSolicitud(ByRef s As tSolicitud, inventario As Object, cfg
 
             If cfg.Excluidos.Exists(codigo) Then
                 .Estado = EST_RECHAZADO
-                .Motivo = "Item en lista de exclusión de reglas"
+                .Motivo = "Item en lista de exclusion de reglas"
 
             ElseIf cfg.CantidadMaxima > 0 And .Qty > cfg.CantidadMaxima Then
                 .Estado = EST_RECHAZADO
-                .Motivo = "Cantidad (" & .Qty & ") supera el máximo configurado (" & cfg.CantidadMaxima & ")"
+                .Motivo = "Cantidad (" & .Qty & ") supera el maximo configurado (" & cfg.CantidadMaxima & ")"
 
             ElseIf cfg.CantidadMinima > 0 And .Qty < cfg.CantidadMinima Then
                 .Estado = EST_RECHAZADO
-                .Motivo = "Cantidad (" & .Qty & ") por debajo del mínimo configurado (" & cfg.CantidadMinima & ")"
+                .Motivo = "Cantidad (" & .Qty & ") por debajo del minimo configurado (" & cfg.CantidadMinima & ")"
 
             ElseIf rddNoLegible Then
                 .Estado = EST_REVISAR
@@ -562,24 +571,24 @@ Private Sub EvaluarUnaSolicitud(ByRef s As tSolicitud, inventario As Object, cfg
 
             ElseIf rddEnRiesgo Then
                 .Estado = EST_RECHAZADO
-                .Motivo = "RDD a " & dias & " día(s) (mínimo requerido: " & cfg.MargenDias & ")"
+                .Motivo = "RDD a " & dias & " dia(s) (minimo requerido: " & cfg.MargenDias & ")"
 
             ElseIf Not .EnInventario Then
                 If EsItemServicio(.Descripcion) Then
                     .Estado = EST_SERVICIO
-                    .Motivo = "Item de servicio o paquete — no tiene entrada en el OH"
+                    .Motivo = "Item de servicio o paquete - no tiene entrada en el OH"
                 Else
                     .Estado = EST_SINDATO
                     .Motivo = "Item no encontrado en el reporte de disponibilidad"
                 End If
 
             ElseIf .Disponible < 0 Then
-                ' Antes del cálculo de porcentaje: dividir entre un negativo
+                ' Antes del calculo de porcentaje: dividir entre un negativo
                 ' da un porcentaje negativo que, por ser menor al umbral,
-                ' pasaría como Aprobado — justo al revés de la realidad.
+                ' pasaria como Aprobado - justo al reves de la realidad.
                 If EsItemServicio(.Descripcion) Then
                     .Estado = EST_SERVICIO
-                    .Motivo = "Disponible negativo (" & .Disponible & ") — esperado en items de servicio o paquete"
+                    .Motivo = "Disponible negativo (" & .Disponible & ") - esperado en items de servicio o paquete"
                 Else
                     .Estado = EST_RECHAZADO
                     .Motivo = "Disponible negativo (" & .Disponible & ") en el OH: no hay material y el dato indica un error de inventario"
@@ -598,7 +607,7 @@ Private Sub EvaluarUnaSolicitud(ByRef s As tSolicitud, inventario As Object, cfg
                     .Motivo = "Consumo " & Format(.Porcentaje, "0.0%") & " supera el umbral (" & Format(cfg.Umbral, "0%") & ")"
                 ElseIf cfg.MargenAmbar > 0 And .Porcentaje >= (cfg.Umbral - cfg.MargenAmbar) Then
                     .Estado = EST_REVISAR
-                    .Motivo = "Consumo " & Format(.Porcentaje, "0.0%") & " está cerca del umbral; revisar antes de aprobar"
+                    .Motivo = "Consumo " & Format(.Porcentaje, "0.0%") & " esta cerca del umbral; revisar antes de aprobar"
                 Else
                     .Estado = EST_APROBADO
                 End If
@@ -630,7 +639,7 @@ End Function
 
 
 '=====================================================================
-' 6 · SALIDA
+' 6 - SALIDA
 '=====================================================================
 
 Private Sub EscribirHoja(s As tSolicitud)
@@ -662,7 +671,7 @@ Private Sub EscribirHoja(s As tSolicitud)
         .Range("B5").Font.Bold = True
         .Range("B5").Interior.Color = ColorDeEstado(EstadoGeneral(s))
 
-        .Range("A7:G7").Value = Array("Item", "Descripción", "Qty solicitada", _
+        .Range("A7:G7").Value = Array("Item", "Descripcion", "Qty solicitada", _
                                       "Disponible", "% consumo", "Estado", "Motivo")
         .Range("A7:G7").Font.Bold = True
         .Range("A7:G7").Interior.Color = FONDO_NEUTRO
@@ -673,12 +682,12 @@ Private Sub EscribirHoja(s As tSolicitud)
                 h.Cells(fila, 1).Value = "'" & .Codigo
                 h.Cells(fila, 2).Value = .Descripcion
                 h.Cells(fila, 3).Value = .Qty
-                If .EnInventario Then h.Cells(fila, 4).Value = .Disponible Else h.Cells(fila, 4).Value = "—"
+                If .EnInventario Then h.Cells(fila, 4).Value = .Disponible Else h.Cells(fila, 4).Value = "-"
                 If .TienePorcentaje Then
                     h.Cells(fila, 5).Value = .Porcentaje
                     h.Cells(fila, 5).NumberFormat = "0.0%"
                 Else
-                    h.Cells(fila, 5).Value = "—"
+                    h.Cells(fila, 5).Value = "-"
                 End If
                 h.Cells(fila, 6).Value = .Estado
                 h.Cells(fila, 6).Interior.Color = ColorDeEstado(.Estado)
@@ -694,8 +703,28 @@ Private Sub EscribirHoja(s As tSolicitud)
         .Columns("G").ColumnWidth = 60
         .Range("A7:G" & fila - 1).Borders.LineStyle = xlContinuous
         .Range("A7:G" & fila - 1).Borders.Color = RGB(200, 205, 215)
-        .Rows(8).Select
-        ActiveWindow.FreezePanes = False
+
+        ' Una solicitud sin items no es "aprobada": es que no se pudo leer.
+        If s.NumItems = 0 Then
+            .Range("B5").Value = "SIN ITEMS LEIDOS"
+            .Range("B5").Interior.Color = FONDO_RECHAZADO
+            .Cells(fila + 1, 1).Value = "No se reconocio ningun renglon de articulo en esta solicitud."
+            .Cells(fila + 1, 1).Font.Bold = True
+            fila = fila + 2
+        End If
+
+        If s.NoReconocidas <> "" Then
+            Dim sueltas As Variant, k As Long
+            .Cells(fila + 1, 1).Value = "Renglones no reconocidos:"
+            .Cells(fila + 1, 1).Font.Bold = True
+            sueltas = Split(s.NoReconocidas, vbLf)
+            For k = LBound(sueltas) To UBound(sueltas)
+                If Trim(CStr(sueltas(k))) <> "" Then
+                    fila = fila + 1
+                    .Cells(fila + 1, 1).Value = "'" & sueltas(k)
+                End If
+            Next k
+        End If
     End With
 End Sub
 
@@ -725,7 +754,7 @@ End Sub
 
 
 '=====================================================================
-' 7 · AUXILIARES
+' 7 - AUXILIARES
 '=====================================================================
 
 Private Function ColorDeEstado(estado As String) As Long
